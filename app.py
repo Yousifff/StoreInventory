@@ -1,3 +1,4 @@
+import sqlalchemy
 from product import engine,session,Base,Product
 import csv
 import time
@@ -21,23 +22,14 @@ def menu():
 
 
 def clean_date(date_str):
-    date = date_str.split('/')
-    
-    try:
-        month = int(date[0])
-        day = int(date[1])
-        year = int(date[2])
-        return_date = datetime.date(year,month,day)
-    except ValueError:
-        input('''
-                \n***** Date ERROR *****
-                \rThe Date format should include a valid Month, Day and year
-                \rExample 9/12/2022
-                \rPlease Try again
-              ''')
-        return
+    date = date_str.split("/")
+    if len(date) < 3:
+        raise ValueError("Date Format must by Month/Day/Year")
     else:
-        return return_date
+        month = int(date_str.split('/')[0])
+        day = int(date_str.split('/')[1])
+        year = int(date_str.split('/')[2])
+        return datetime.date(year,month,day)
     
 
 def clean_price(price_str):
@@ -72,8 +64,10 @@ def load_csv():
                 productName = line['product_name']
                 productPrice = clean_price(line['product_price'])
                 productQuantity = int(line['product_quantity'])
-                productDateUpdated = clean_date(line['date_updated'])
-            
+                try:
+                    productDateUpdated = clean_date(line['date_updated'])
+                except ValueError as err:
+                    print(err)
                 product = Product(product_name=productName,product_price=productPrice,product_quantity=productQuantity,date_updated=productDateUpdated)
                 session.add(product)
         session.commit()
@@ -90,7 +84,7 @@ def database_backup():
 
 def add_product():
     Product_Name = input("Enter a product name : ")
-    Product_Quantity = input("Enter a product quantity : ")
+    Product_Quantity = int(input("Enter a product quantity : "))
     
     
     price_error = True
@@ -104,7 +98,10 @@ def add_product():
     date_error = True
     while date_error:
         Product_Date = input("Enter a date, Month/Day/Year : ")
-        Product_Date = clean_date(Product_Date)
+        try:
+            Product_Date = clean_date(Product_Date)
+        except ValueError as err:
+            print(err)
         if type(Product_Date) == datetime.date:
             date_error = False
     
@@ -125,8 +122,10 @@ def product_view():
         print(product_id_list)
         prod_id = input(" ID >  ")
     
+   
     
-    product_info = session.query(Product).filter(Product.id==int(prod_id)).one()
+    product_info = session.query(Product).filter(Product.id==int(prod_id)).one_or_none()
+   
     print(f'''
           \nProduct Name: {product_info.product_name}
           \rPrice: ${product_info.product_price / 100}
