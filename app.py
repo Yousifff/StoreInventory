@@ -84,8 +84,14 @@ def database_backup():
 
 def add_product():
     Product_Name = input("Enter a product name : ")
-    Product_Quantity = int(input("Enter a product quantity : "))
+    quantity_error = True
     
+    while quantity_error:
+        try:
+            Product_Quantity = int(input("Enter a product quantity : "))
+            quantity_error = False
+        except ValueError:
+            print("Product Quantity must be an integer number!!!\n")
     
     price_error = True
     while price_error:
@@ -112,26 +118,31 @@ def add_product():
             
 def product_view():
     product_id_list = []
-    
+    prod_id = ''
+    product_info = None
+    found = False
     for product_id in session.query(Product):
         product_id_list.append(product_id.id)
-    
-    prod_id = input("Which id you would like to view its info ? ")
-    if int(prod_id) not in product_id_list:
-        print("Please enter a valid product's ID : ")
-        print(product_id_list)
-        prod_id = input(" ID >  ")
-    
+  
+    try:
+        prod_id = int(input("Enter a product ID : "))
+    except ValueError:
+        print("ID entered must be a number ")
+    else:
+        if prod_id in product_id_list:
+            product_info = session.query(Product).filter(Product.id==prod_id).one_or_none()
+            print(f'''
+            \nProduct Name: {product_info.product_name}
+            \rPrice: ${product_info.product_price / 100}
+            \rQuantity: {product_info.product_quantity}
+            \rDate: {product_info.date_updated}
+            ''')
+        else:
+            print("The entered ID is not in database!")    
+   
+        
    
     
-    product_info = session.query(Product).filter(Product.id==int(prod_id)).one_or_none()
-   
-    print(f'''
-          \nProduct Name: {product_info.product_name}
-          \rPrice: ${product_info.product_price / 100}
-          \rQuantity: {product_info.product_quantity}
-          \rDate: {product_info.date_updated}
-          ''')
         
 
 def run_app():
